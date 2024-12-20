@@ -1,12 +1,7 @@
-package org.africa.semicolon.jlims.dtos.request;
+package org.africa.semicolon.jlims_refactored.dtos.request;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.africa.semicolon.jlims.data.models.Book;
-import org.africa.semicolon.jlims.data.models.Borrower;
-import org.springframework.data.mongodb.core.mapping.DBRef;
-
-import java.time.LocalDateTime;
 
 @Setter
 @Getter

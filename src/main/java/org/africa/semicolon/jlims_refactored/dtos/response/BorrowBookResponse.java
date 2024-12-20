@@ -1,8 +1,9 @@
-package org.africa.semicolon.jlims.dtos.response;
+package org.africa.semicolon.jlims_refactored.dtos.response;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.africa.semicolon.jlims.Enums.Role;
+import org.africa.semicolon.jlims_refactored.enums.Role;
+
 
 @Setter
 @Getter

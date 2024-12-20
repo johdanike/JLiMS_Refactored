@@ -1,4 +1,8 @@
 package org.africa.semicolon.jlims_refactored.data.repositories;
 
-public class Users {
+import org.africa.semicolon.jlims_refactored.data.models.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface Users extends MongoRepository<User, String> {
+     User findByUsername(String username);
 }

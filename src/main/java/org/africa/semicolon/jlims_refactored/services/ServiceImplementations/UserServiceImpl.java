@@ -1,4 +1,6 @@
-package org.africa.semicolon.jlims_refactored.services;
+package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 
-public class UserServiceImpl implements UserService{
+import org.africa.semicolon.jlims_refactored.services.UserService;
+
+public class UserServiceImpl implements UserService {
 }

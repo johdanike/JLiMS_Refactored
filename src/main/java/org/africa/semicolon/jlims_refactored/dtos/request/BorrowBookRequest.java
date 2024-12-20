@@ -1,9 +1,8 @@
-package org.africa.semicolon.jlims.dtos.request;
+package org.africa.semicolon.jlims_refactored.dtos.request;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.africa.semicolon.jlims.Enums.BookType;
-import org.africa.semicolon.jlims.Enums.Role;
+import org.africa.semicolon.jlims_refactored.enums.Role;
 
 @Setter
 @Getter
@@ -12,7 +11,6 @@ public class BorrowBookRequest {
     private String bookId;
     private String bookName;
     private String author;
-    private BookType bookType;
     private Integer quantity;
     private Role role;
     private String name;

@@ -1,4 +1,4 @@
-package org.africa.semicolon.jlims.dtos.request;
+package org.africa.semicolon.jlims_refactored.dtos.request;
 
 import lombok.Getter;
 import lombok.Setter;

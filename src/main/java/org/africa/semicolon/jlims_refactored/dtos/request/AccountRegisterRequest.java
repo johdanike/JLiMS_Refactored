@@ -1,8 +1,8 @@
-package org.africa.semicolon.jlims.dtos.request;
+package org.africa.semicolon.jlims_refactored.dtos.request;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.africa.semicolon.jlims.Enums.Role;
+import org.africa.semicolon.jlims_refactored.enums.Role;
 
 import java.time.LocalDateTime;
 

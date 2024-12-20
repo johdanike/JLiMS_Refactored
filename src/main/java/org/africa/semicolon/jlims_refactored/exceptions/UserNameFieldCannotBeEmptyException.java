@@ -1,4 +1,4 @@
-package org.africa.semicolon.jlims.exceptions;
+package org.africa.semicolon.jlims_refactored.exceptions;
 
 public class UserNameFieldCannotBeEmptyException extends RuntimeException {
     public UserNameFieldCannotBeEmptyException(String message) {
