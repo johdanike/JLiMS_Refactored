@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
+
     private final Users users;
 
     public AuthenticationServiceImpl(Users users) {
@@ -25,6 +26,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setUsername(accountRegisterRequest.getUsername());
         user.setPassword(accountRegisterRequest.getPassword());
         user.setRole(accountRegisterRequest.getRole());
+        user.setEmail(accountRegisterRequest.getEmail());
         user.setLoggedIn(false);
         users.save(user);
         AccountRegisterResponse response = new AccountRegisterResponse();

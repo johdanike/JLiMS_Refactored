@@ -12,11 +12,8 @@ import java.time.LocalDateTime;
 public class Inventory {
     @Id
     private String id;
-    @DBRef
     private String userId;
-    @DBRef
     private String bookId;
-    @DBRef
     private Integer noOfCopyOfBooks;
     private LocalDateTime dateBorrowed;
     private LocalDateTime dateReturned;

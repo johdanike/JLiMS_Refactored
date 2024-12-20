@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.time.LocalDateTime;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -32,23 +30,20 @@ public class AuthenticationServiceTest {
         accountRegisterRequest.setUsername("username");
         accountRegisterRequest.setPassword("password");
         accountRegisterRequest.setEmail("email@email.com");
-        accountRegisterRequest.setCreatedAt(LocalDateTime.now());
-        accountRegisterRequest.setLoggedIn(accountRegisterRequest.isLoggedIn());
         accountRegisterRequest.setRegistered(true);
-        accountRegisterRequest.setName("John-Daniel Ikechukwu");
+        accountRegisterRequest.setLoggedIn(false);
     }
 
     @Test
     public void testRegisterAccountAccount() {
-        accountRegisterRequest.setLoggedIn(false);
-        AccountRegisterResponse accountRegisterResponse = authenticationService.registerAccount(accountRegisterRequest);
+        AccountRegisterResponse accountRegisterResponse =
+                authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
         assertEquals(1, users.count());
     }
 
     @Test
     public void test_thatUserCanLogin() {
-        accountRegisterRequest.setLoggedIn(false);
         AccountRegisterResponse accountRegisterResponse = authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
 
@@ -63,7 +58,6 @@ public class AuthenticationServiceTest {
 
     @Test
     public void test_thatUserCanLogOut() {
-        accountRegisterRequest.setLoggedIn(false);
         AccountRegisterResponse accountRegisterResponse = authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
 
@@ -78,7 +72,6 @@ public class AuthenticationServiceTest {
 
     @Test
     public void test_thatUserCannotLoginWithWrongUsername_throwsException() {
-        accountRegisterRequest.setLoggedIn(false);
         AccountRegisterResponse accountRegisterResponse = authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
 
@@ -95,7 +88,6 @@ public class AuthenticationServiceTest {
 
     @Test
     public void test_thatUserCannotRegisterAccountSameNameMoreThanOnce_throwsException() {
-        accountRegisterRequest.setLoggedIn(false);
         AccountRegisterResponse accountRegisterResponse = authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
 

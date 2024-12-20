@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Book {
     @Id
     private String id;
-    @DBRef
     private String title;
     private String author;
     private Genre genre;
