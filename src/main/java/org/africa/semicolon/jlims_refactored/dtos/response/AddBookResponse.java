@@ -8,6 +8,5 @@ import lombok.Setter;
 public class AddBookResponse {
     private String bookName;
     private String message;
-    private Integer bookQuantity;
     private String bookId;
 }
