@@ -6,9 +6,11 @@ import org.africa.semicolon.jlims_refactored.data.repositories.Users;
 import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.AddBookRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.BorrowBookRequest;
+import org.africa.semicolon.jlims_refactored.dtos.request.ReturnBookRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AccountRegisterResponse;
 import org.africa.semicolon.jlims_refactored.dtos.response.AddBookResponse;
 import org.africa.semicolon.jlims_refactored.dtos.response.BorrowBookResponse;
+import org.africa.semicolon.jlims_refactored.dtos.response.ReturnBookResponse;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.exceptions.UserAlreadyExistsException;
@@ -31,6 +33,7 @@ public class UserServiceTest {
     private Books books;
     private AddBookRequest addBookRequest;
     private BorrowBookRequest borrowBookRequest;
+    private ReturnBookRequest returnBookRequest;
     @Autowired
     private Libraries libraryRepo;
 
@@ -52,16 +55,20 @@ public class UserServiceTest {
         addBookRequest.setAuthor("Chinua Achebe");
         addBookRequest.setGenre(Genre.DRAMA);
         addBookRequest.setIsAvailable("Yes");
+        addBookRequest.setNoOfCopies(10);
 
 
         borrowBookRequest = new BorrowBookRequest();
+        borrowBookRequest.setUsername("username");
         borrowBookRequest.setTitle(accountRegisterRequest.getUsername());
         borrowBookRequest.setRole(Role.MEMBER);
-        borrowBookRequest.setUsername(accountRegisterRequest.getUsername());
-        borrowBookRequest.setAuthor(addBookRequest.getAuthor());
         borrowBookRequest.setBookName("Things fall apart");
         borrowBookRequest.setAuthor("Chinua Achebe");
 
+        returnBookRequest = new ReturnBookRequest();
+        returnBookRequest.setUsername("username");
+        returnBookRequest.setBookName("Things fall apart");
+        returnBookRequest.setAuthor("Chinua Achebe");
     }
 
     @Test
@@ -107,8 +114,8 @@ public class UserServiceTest {
         assertEquals("Book added successfully", addBookResponse.getMessage());
         assertEquals(1L, books.count());
 
-//        Integer bookQuantity = addBookResponse.getBookQuantity();
-//        assertEquals(10 , bookQuantity);
+        Integer bookQuantity = addBookResponse.getBookQuantity();
+        assertEquals(10 , bookQuantity);
     }
 
     @Test
@@ -116,19 +123,40 @@ public class UserServiceTest {
         accountRegisterRequest.setRole(Role.MEMBER);
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
-
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(10, addBookResponse.getBookQuantity());
 
-        System.out.println("add book id: "+ addBookResponse.getBookId());
+        borrowBookRequest.setBookId(addBookResponse.getBookId());
         BorrowBookResponse borrowBookResponse = userService.borrowBook(borrowBookRequest);
-//        assertEquals(null, borrowBookResponse);
-        System.out.println(borrowBookResponse.getBookId());
-
-//        assertEquals("Book borrowed successfully", borrowBookResponse.getMessage());
+        assertEquals("Book borrowed successfully", borrowBookResponse.getMessage());
         assertEquals(1L, books.count());
-//        assertEquals(9, addBookResponse.getBookQuantity());
+        assertEquals(9, borrowBookResponse.getQuantity());
+
     }
+
+    @Test
+    public void i_borrowExistingBook_bookCountIsStill1_bookQuantityDecreasesByOne_iReturnBook_noOfCopiesOfBookIncreasesBy1_Test() {
+        accountRegisterRequest.setRole(Role.MEMBER);
+        userService.register(accountRegisterRequest);
+        assertEquals(0L, books.count());
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(10, addBookResponse.getBookQuantity());
+
+        borrowBookRequest.setBookId(addBookResponse.getBookId());
+        BorrowBookResponse borrowBookResponse = userService.borrowBook(borrowBookRequest);
+        assertEquals("Book borrowed successfully", borrowBookResponse.getMessage());
+        assertEquals(1L, books.count());
+        assertEquals(9, borrowBookResponse.getQuantity());
+
+        returnBookRequest.setBookId(addBookResponse.getBookId());
+        ReturnBookResponse returnBookResponse = userService.returnBook(returnBookRequest);
+        assertEquals("Book returned successfully", returnBookResponse.getMessage());
+        assertEquals(1L, books.count());
+        assertEquals(10, returnBookResponse.getQuantity());
+    }
+
 
 
 

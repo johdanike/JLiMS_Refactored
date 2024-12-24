@@ -7,5 +7,7 @@ import lombok.Setter;
 @Getter
 public class ReturnBookRequest {
     private String username;
-    private String libraryBookLoanId;
+    private String bookName;
+    private String author;
+    private String bookId;
 }

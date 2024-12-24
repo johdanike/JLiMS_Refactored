@@ -7,5 +7,4 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface Libraries extends MongoRepository<Library, String> {
     void save(Book book);
-    Libraries findByUserAndBookId(User registeredMember, String bookId);
 }

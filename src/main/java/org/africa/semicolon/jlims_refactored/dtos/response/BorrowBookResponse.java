@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 
+import java.time.LocalDate;
+
 
 @Setter
 @Getter
@@ -15,4 +17,5 @@ public class BorrowBookResponse {
     private String message;
     private Integer quantity;
     private Role role;
+    private LocalDate borrowDate;
 }

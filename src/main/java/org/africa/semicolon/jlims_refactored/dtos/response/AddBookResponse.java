@@ -9,4 +9,5 @@ public class AddBookResponse {
     private String bookName;
     private String message;
     private String bookId;
+    private Integer bookQuantity;
 }
