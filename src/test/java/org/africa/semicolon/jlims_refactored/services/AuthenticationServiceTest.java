@@ -1,11 +1,10 @@
-package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
+package org.africa.semicolon.jlims_refactored.services;
 
-import org.africa.semicolon.jlims_refactored.data.repositories.Users;
+import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.LoginRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AccountRegisterResponse;
 import org.africa.semicolon.jlims_refactored.exceptions.UserAlreadyExistsException;
-import org.africa.semicolon.jlims_refactored.services.AuthenticationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +19,11 @@ public class AuthenticationServiceTest {
     AccountRegisterRequest accountRegisterRequest;
 
     @Autowired
-    Users users;
+    UserRepository userRepository;
 
     @BeforeEach
     public void setUp() {
-        users.deleteAll();
+        userRepository.deleteAll();
 
         accountRegisterRequest = new AccountRegisterRequest();
         accountRegisterRequest.setUsername("username");
@@ -39,7 +38,7 @@ public class AuthenticationServiceTest {
         AccountRegisterResponse accountRegisterResponse =
                 authenticationService.registerAccount(accountRegisterRequest);
         assertNotNull(accountRegisterResponse);
-        assertEquals(1, users.count());
+        assertEquals(1, userRepository.count());
     }
 
     @Test
@@ -52,7 +51,7 @@ public class AuthenticationServiceTest {
         loginRequest.setPassword(accountRegisterRequest.getPassword());
         boolean loginResponse = authenticationService.login(loginRequest);
         assertTrue(loginResponse);
-        assertEquals(1, users.count());
+        assertEquals(1, userRepository.count());
     }
 
 

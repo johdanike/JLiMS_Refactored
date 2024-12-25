@@ -2,7 +2,7 @@ package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 
 
 import org.africa.semicolon.jlims_refactored.data.models.User;
-import org.africa.semicolon.jlims_refactored.data.repositories.Users;
+import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.LoginRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AccountRegisterResponse;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private final Users users;
+    private final UserRepository userRepository;
 
-    public AuthenticationServiceImpl(Users users) {
-        this.users = users;
+    public AuthenticationServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setRole(accountRegisterRequest.getRole());
         user.setEmail(accountRegisterRequest.getEmail());
         user.setLoggedIn(false);
-        users.save(user);
+        userRepository.save(user);
         AccountRegisterResponse response = new AccountRegisterResponse();
         response.setId(user.getId());
         response.setUsername(user.getUsername());
@@ -38,7 +38,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public boolean login(LoginRequest loginRequest) {
-        User user = this.users.findByUsername(loginRequest.getUsername());
+        User user = this.userRepository.findByUsername(loginRequest.getUsername());
         if (user == null || loginRequest.getUsername() == null || !user.getPassword().equals(loginRequest.getPassword())
 
                 || !user.getUsername().equals(loginRequest.getUsername())) {
@@ -53,20 +53,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public boolean logout() {
         User user = getCurrentUser();
         user.setLoggedIn(false);
-        users.save(user);
+        userRepository.save(user);
         return true;
     }
 
     private User getCurrentUser() {
         User user = new User();
-        if(users.findByUsername(user.getUsername()) != null || user.isLoggedIn()) {
-            return users.findByUsername(user.getUsername());
+        if(userRepository.findByUsername(user.getUsername()) != null || user.isLoggedIn()) {
+            return userRepository.findByUsername(user.getUsername());
         }
         return user;
     }
 
     private void checkIfUserAlreadyExists(String username) {
-        if(users.findByUsername(username) != null)
+        if(userRepository.findByUsername(username) != null)
             throw new UserAlreadyExistsException("Username " + username + " already exists!");
     }
 }

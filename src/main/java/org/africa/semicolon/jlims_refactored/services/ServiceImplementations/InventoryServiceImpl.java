@@ -1,7 +1,6 @@
 package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 
 import org.africa.semicolon.jlims_refactored.data.models.Inventory;
-import org.africa.semicolon.jlims_refactored.data.repositories.Books;
 import org.africa.semicolon.jlims_refactored.services.InventoryService;
 import org.springframework.stereotype.Service;
 

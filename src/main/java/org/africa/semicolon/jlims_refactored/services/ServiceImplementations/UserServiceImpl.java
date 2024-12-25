@@ -3,10 +3,9 @@ package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 import org.africa.semicolon.jlims_refactored.data.models.Book;
 import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
-import org.africa.semicolon.jlims_refactored.data.repositories.Books;
-import org.africa.semicolon.jlims_refactored.data.repositories.Inventories;
+import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.Libraries;
-import org.africa.semicolon.jlims_refactored.data.repositories.Users;
+import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.*;
 import org.africa.semicolon.jlims_refactored.dtos.response.*;
 import org.africa.semicolon.jlims_refactored.exceptions.BookAlreadyExistsException;
@@ -19,15 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
-    private Users users;
+    private UserRepository userRepository;
     @Autowired
-    private Books books;
+    private BookRepository books;
     @Autowired
     private Libraries libraries;
     @Autowired
@@ -47,6 +45,18 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
+
+    private User getUserDetailsForRegistration(AccountRegisterRequest registerRequest) {
+        User user = new User();
+        user.setUsername(registerRequest.getUsername());
+        user.setPassword(registerRequest.getPassword());
+        user.setEmail(registerRequest.getEmail());
+        user.setRole(registerRequest.getRole());
+        user.setLoggedIn(false);
+        userRepository.save(user);
+        return user;
+    }
+
     @Override
     public AddBookResponse addBook(AddBookRequest addBookRequest) {
         bookExistsValidator(addBookRequest.getTitle(), addBookRequest.getAuthor());
@@ -60,6 +70,18 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
+    private Book getBookDetailsForBookStocking(AddBookRequest addBookRequest) {
+        Book book = new Book();
+
+        book.setTitle(addBookRequest.getTitle());
+        book.setAuthor(addBookRequest.getAuthor());
+        book.setGenre(addBookRequest.getGenre());
+        book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
+        books.save(book);
+
+        return book;
+    }
+
     @Override
     public BorrowBookResponse borrowBook(BorrowBookRequest borrowBookRequest) {
         User registeredMember = findUserByUsername(borrowBookRequest.getUsername());
@@ -71,6 +93,25 @@ public class UserServiceImpl implements UserService {
         System.out.println("book id is: "+bookId);
         System.out.println(borrowBookRequest.getBookId());
 
+        BorrowBookResponse response = getBorrowBookResponse(borrowBookRequest, numOfCopiesAvailable);
+        updateInventoryForBorrowedBook(borrowBookRequest, registeredMember, numOfCopiesAvailable);
+
+
+        return response;
+    }
+
+    private void updateInventoryForBorrowedBook(BorrowBookRequest borrowBookRequest, User registeredMember, int numOfCopiesAvailable) {
+        Inventory inventory = new Inventory();
+        inventory.setBorrowed(true);
+        inventory.setBookId(borrowBookRequest.getBookId());
+        inventory.setUserId(registeredMember.getId());
+        inventory.setDateBorrowed(borrowBookRequest.getBorrowDate());
+        inventory.setDateReturned(null);
+        inventory.setNoOfCopyOfBooks(numOfCopiesAvailable);
+        inventories.save(inventory);
+    }
+
+    private static BorrowBookResponse getBorrowBookResponse(BorrowBookRequest borrowBookRequest, int numOfCopiesAvailable) {
         BorrowBookResponse response = new BorrowBookResponse();
         response.setBookId(borrowBookRequest.getBookId());
         response.setName(borrowBookRequest.getUsername());
@@ -80,17 +121,6 @@ public class UserServiceImpl implements UserService {
         response.setMessage("Book borrowed successfully");
         response.setQuantity(numOfCopiesAvailable);
         response.setBorrowDate(borrowBookRequest.getBorrowDate());
-
-        Inventory inventory = new Inventory();
-        inventory.setBorrowed(true);
-        inventory.setBookId(borrowBookRequest.getBookId());
-        inventory.setUserId(registeredMember.getId());
-        inventory.setDateBorrowed(borrowBookRequest.getBorrowDate());
-        inventory.setDateReturned(null);
-        inventory.setNoOfCopyOfBooks(numOfCopiesAvailable);
-        inventories.save(inventory);
-
-
         return response;
     }
 
@@ -102,24 +132,21 @@ public class UserServiceImpl implements UserService {
         bookExistsValidator(borrowBookRequest.getTitle(), borrowBookRequest.getAuthor());
         int presentNumOfCopies = 0;
         Optional<Book> book = books.findById(borrowBookRequest.getBookId());
-
         if (book.isPresent()){
             presentNumOfCopies = book.get().getNumOfCopies();
         }
         if (presentNumOfCopies <= 0)
             throw new IllegalArgumentException("Book is currently out of stock, " +
                     "mind checking another book?");
-
         book.get().setNumOfCopies(presentNumOfCopies - 1);
 //        System.out.println("new number of copieis" + book.get().getNumOfCopies());
-
         books.save(book.get());
         return book.get().getNumOfCopies();
     }
 
     private User findUserByUsername(String username) {
         if(username != null) {
-            return users.findByUsername(username);
+            return userRepository.findByUsername(username);
         }
         throw new UserNotFoundException("User not found!");
     }
@@ -133,12 +160,13 @@ public class UserServiceImpl implements UserService {
         int numOfCopiesAvailable = newBookQuantityAfterReturning(returnBookRequest);
         System.out.println("no of copies" + numOfCopiesAvailable);
 
-        ReturnBookResponse response = new ReturnBookResponse();
-        response.setBookId(returnBookRequest.getBookId());
-        response.setQuantity(numOfCopiesAvailable);
-        response.setUsername(returnBookRequest.getUsername());
-        response.setMessage("Book returned successfully");
+        ReturnBookResponse response = getReturnBookResponse(returnBookRequest, numOfCopiesAvailable);
+        updateInventoryForBorrowedBookReturned(returnBookRequest, registeredMember, numOfCopiesAvailable);
 
+        return response;
+    }
+
+    private void updateInventoryForBorrowedBookReturned(ReturnBookRequest returnBookRequest, User registeredMember, int numOfCopiesAvailable) {
         BorrowBookResponse borrowBookResponse = new BorrowBookResponse();
         Inventory inventory = new Inventory();
         inventory.setBorrowed(false);
@@ -150,7 +178,14 @@ public class UserServiceImpl implements UserService {
         inventory.setBookId(returnBookRequest.getBookId());
 
         inventories.save(inventory);
+    }
 
+    private static ReturnBookResponse getReturnBookResponse(ReturnBookRequest returnBookRequest, int numOfCopiesAvailable) {
+        ReturnBookResponse response = new ReturnBookResponse();
+        response.setBookId(returnBookRequest.getBookId());
+        response.setQuantity(numOfCopiesAvailable);
+        response.setUsername(returnBookRequest.getUsername());
+        response.setMessage("Book returned successfully");
         return response;
     }
 
@@ -167,7 +202,7 @@ public class UserServiceImpl implements UserService {
         Book foundBook = book.orElseThrow(() -> new IllegalArgumentException("Book " + returnBookRequest.getBookId()+" not found!"));
         presentNumOfCopies = foundBook.getNumOfCopies();
         foundBook.setNumOfCopies(presentNumOfCopies + 1);
-        System.out.println("new number of copieis" + book.get().getNumOfCopies());
+        System.out.println("new number of copie is " + book.get().getNumOfCopies());
 
         books.save(foundBook);
         return foundBook.getNumOfCopies();
@@ -175,7 +210,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public DeleteBookResponse deleteBook(DeleteBookRequest deleteBookRequest) {
-        return null;
+
+        User registeredMember = findUserByUsername(deleteBookRequest.getUsername());
+        usernameValidator(registeredMember);
+
+        bookExistsValidator(deleteBookRequest.getBookId());
+        DeleteBookResponse deleteBookResponse = new DeleteBookResponse();
+        deleteBookResponse.setBookId(deleteBookRequest.getBookId());
+        deleteBookResponse.setMessage("Book deleted successfully");
+        books.deleteById(deleteBookRequest.getBookId());
+
+        updateInventoryForDeleteBookRequest(deleteBookRequest, registeredMember);
+        return deleteBookResponse;
+    }
+
+    private void updateInventoryForDeleteBookRequest(DeleteBookRequest deleteBookRequest, User registeredMember) {
+        Inventory inventory = new Inventory();
+        inventory.setBookId(deleteBookRequest.getBookId());
+        inventory.setBorrowed(false);
+        inventory.setNoOfCopyOfBooks(0);
+        inventory.setReturned(true);
+        inventory.setId(registeredMember.getId());
+        inventory.setNoOfCopyOfBooks(null);
+        inventory.setDateReturned(null);
+        inventories.save(inventory);
+    }
+
+    private void bookExistsValidator(String bookId) {
+        if (bookId == null) {
+            throw new IllegalArgumentException("Book id cannot be null");
+        }
+        books.findById(bookId);
     }
 
     private void bookExistsValidator(String title, String author) {
@@ -186,29 +251,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private User getUserDetailsForRegistration(AccountRegisterRequest registerRequest) {
-        User user = new User();
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(registerRequest.getPassword());
-        user.setEmail(registerRequest.getEmail());
-        user.setRole(registerRequest.getRole());
-        user.setLoggedIn(false);
-        users.save(user);
-        return user;
-    }
-
-
-    private Book getBookDetailsForBookStocking(AddBookRequest addBookRequest) {
-        Book book = new Book();
-
-        book.setTitle(addBookRequest.getTitle());
-        book.setAuthor(addBookRequest.getAuthor());
-        book.setGenre(addBookRequest.getGenre());
-        book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
-        books.save(book);
-
-        return book;
-    }
 
     private void usernameValidator(AccountRegisterRequest registerRequest) {
         if (registerRequest.getUsername() == null || registerRequest.getUsername().trim().isEmpty()) {

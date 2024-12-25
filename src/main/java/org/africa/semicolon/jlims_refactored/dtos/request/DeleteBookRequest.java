@@ -8,4 +8,5 @@ import lombok.Setter;
 public class DeleteBookRequest {
     private String bookId;
     private String message;
+    private String username;
 }

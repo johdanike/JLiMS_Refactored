@@ -1,20 +1,13 @@
-package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
+package org.africa.semicolon.jlims_refactored.services;
 
-import org.africa.semicolon.jlims_refactored.data.repositories.Books;
+import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.Libraries;
-import org.africa.semicolon.jlims_refactored.data.repositories.Users;
-import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
-import org.africa.semicolon.jlims_refactored.dtos.request.AddBookRequest;
-import org.africa.semicolon.jlims_refactored.dtos.request.BorrowBookRequest;
-import org.africa.semicolon.jlims_refactored.dtos.request.ReturnBookRequest;
-import org.africa.semicolon.jlims_refactored.dtos.response.AccountRegisterResponse;
-import org.africa.semicolon.jlims_refactored.dtos.response.AddBookResponse;
-import org.africa.semicolon.jlims_refactored.dtos.response.BorrowBookResponse;
-import org.africa.semicolon.jlims_refactored.dtos.response.ReturnBookResponse;
+import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
+import org.africa.semicolon.jlims_refactored.dtos.request.*;
+import org.africa.semicolon.jlims_refactored.dtos.response.*;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.exceptions.UserAlreadyExistsException;
-import org.africa.semicolon.jlims_refactored.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +21,9 @@ public class UserServiceTest {
     private UserService userService;
     AccountRegisterRequest accountRegisterRequest;
     @Autowired
-    private Users users;
+    private UserRepository userRepository;
     @Autowired
-    private Books books;
+    private BookRepository books;
     private AddBookRequest addBookRequest;
     private BorrowBookRequest borrowBookRequest;
     private ReturnBookRequest returnBookRequest;
@@ -39,7 +32,7 @@ public class UserServiceTest {
 
     @BeforeEach
     public void setUp() {
-        users.deleteAll();
+        userRepository.deleteAll();
         books.deleteAll();
         libraryRepo.deleteAll();
 
@@ -69,6 +62,7 @@ public class UserServiceTest {
         returnBookRequest.setUsername("username");
         returnBookRequest.setBookName("Things fall apart");
         returnBookRequest.setAuthor("Chinua Achebe");
+
     }
 
     @Test
@@ -76,13 +70,13 @@ public class UserServiceTest {
         accountRegisterRequest.setRole(Role.MEMBER);
         AccountRegisterResponse response = userService.register(accountRegisterRequest);
         assertNotNull(response);
-        assertEquals(1L, users.count());
+        assertEquals(1L, userRepository.count());
     }
 
     @Test
     public void i_registerUserTwice_countIsStillOne_Test() {
         userService.register(accountRegisterRequest);
-        assertEquals(1L, users.count());
+        assertEquals(1L, userRepository.count());
     }
 
     @Test
@@ -157,7 +151,23 @@ public class UserServiceTest {
         assertEquals(10, returnBookResponse.getQuantity());
     }
 
+    @Test
+    public void librarianCanDeleteBookFromLibrary_test(){
+        accountRegisterRequest.setRole(Role.LIBRARIAN);
+        userService.register(accountRegisterRequest);
+        assertEquals(0L, books.count());
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(10, addBookResponse.getBookQuantity());
 
+        DeleteBookRequest deleteBookRequest = new DeleteBookRequest();
+        deleteBookRequest.setBookId(addBookResponse.getBookId());
+        deleteBookRequest.setUsername("username");
+        deleteBookRequest.setMessage("Book deleted successfully");
+        DeleteBookResponse deleteBookResponse = userService.deleteBook(deleteBookRequest);
+        assertEquals("Book deleted successfully", deleteBookResponse.getMessage());
+        assertEquals(0L, books.count());
+    }
 
 
 }

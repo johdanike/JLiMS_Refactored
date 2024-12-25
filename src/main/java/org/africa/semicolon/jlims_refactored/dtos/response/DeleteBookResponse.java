@@ -7,4 +7,5 @@ import lombok.Setter;
 @Getter
 public class DeleteBookResponse {
     private String bookId;
+    private String message;
 }
