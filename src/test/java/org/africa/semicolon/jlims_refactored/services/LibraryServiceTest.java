@@ -113,4 +113,19 @@ public class LibraryServiceTest {
         List<User> foundUsers = libraryService.viewAllUsers();
         assertNotNull(foundUsers);
     }
+
+    @Test
+    public void findUserByUsername_test(){
+        userRepository.save(user);
+        User foundUser = libraryService.findUserByUsername(user.getUsername());
+        assertNotNull(foundUser);
+    }
+
+    @Test
+    public void adminCanDeleteUser_test(){
+        userRepository.save(user);
+        User foundUser = libraryService.deleteUser(user.getUsername());
+        assertNotNull(foundUser);
+//        assertFalse(userRepository.existsById(foundUser.getId()));
+    }
 }

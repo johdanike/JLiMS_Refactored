@@ -7,4 +7,5 @@ public interface InventoryService {
     boolean isReturned(String bookName);
     Integer noOfBooks();
     void save(Inventory inventory);
+
 }

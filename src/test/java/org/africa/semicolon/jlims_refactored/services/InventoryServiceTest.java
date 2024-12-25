@@ -1,6 +1,6 @@
 package org.africa.semicolon.jlims_refactored.services;
 
-import org.africa.semicolon.jlims_refactored.data.repositories.Libraries;
+import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.BorrowBookRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,14 +14,14 @@ public class InventoryServiceTest {
     private InventoryService inventoryService;
 
     @Autowired
-    private Libraries libraries;
+    private LibraryRepository libraryRepository;
     @Autowired
     private UserRepository userRepository;
     private BorrowBookRequest borrowBookRequest;
 
     @BeforeEach
     public void setUp() {
-        libraries.deleteAll();
+        libraryRepository.deleteAll();
         userRepository.deleteAll();
 
         borrowBookRequest = new BorrowBookRequest();

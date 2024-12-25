@@ -4,7 +4,7 @@ import org.africa.semicolon.jlims_refactored.data.models.Book;
 import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
-import org.africa.semicolon.jlims_refactored.data.repositories.Libraries;
+import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.*;
 import org.africa.semicolon.jlims_refactored.dtos.response.*;
@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private BookRepository books;
     @Autowired
-    private Libraries libraries;
+    private LibraryRepository libraryRepository;
     @Autowired
     private InventoryService inventories;
 

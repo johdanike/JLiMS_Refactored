@@ -1,7 +1,7 @@
 package org.africa.semicolon.jlims_refactored.services;
 
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
-import org.africa.semicolon.jlims_refactored.data.repositories.Libraries;
+import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.*;
 import org.africa.semicolon.jlims_refactored.dtos.response.*;
@@ -28,7 +28,7 @@ public class UserServiceTest {
     private BorrowBookRequest borrowBookRequest;
     private ReturnBookRequest returnBookRequest;
     @Autowired
-    private Libraries libraryRepo;
+    private LibraryRepository libraryRepo;
 
     @BeforeEach
     public void setUp() {

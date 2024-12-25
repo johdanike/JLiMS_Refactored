@@ -12,4 +12,6 @@ public interface LibraryService {
     List<Book> findBooksByTitle(String bookTitle);
     List<Book> findBooksByAuthor(String author);
     List<User> viewAllUsers();
+    User findUserByUsername(String username);
+    User deleteUser(String username);
 }
