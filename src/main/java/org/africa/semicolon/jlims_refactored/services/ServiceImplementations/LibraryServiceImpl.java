@@ -8,7 +8,6 @@ import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
-import org.africa.semicolon.jlims_refactored.dtos.request.DeleteUserRequest;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.services.InventoryService;
