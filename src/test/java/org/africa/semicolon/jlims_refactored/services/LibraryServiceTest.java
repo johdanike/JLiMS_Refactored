@@ -1,6 +1,7 @@
 package org.africa.semicolon.jlims_refactored.services;
 
 import org.africa.semicolon.jlims_refactored.data.models.Book;
+import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
@@ -122,10 +123,38 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void adminCanDeleteUser_test(){
+    public void onlyLibrarianCanDeleteUser_test(){
         userRepository.save(user);
-        User foundUser = libraryService.deleteUser(user.getUsername());
+        User user1 = new User();
+        user1.setUsername("JohnDaniel");
+        user1.setPassword("password");
+        user1.setEmail("john@gmail.com");
+        user1.setRole(Role.MEMBER);
+        user1.setLoggedIn(true);
+        userRepository.save(user1);
+
+        assertEquals(2, userRepository.count());
+        List<Inventory> foundUser = libraryService.deleteUser(user.getUsername(), user1);
         assertNotNull(foundUser);
-//        assertFalse(userRepository.existsById(foundUser.getId()));
+        assertEquals(1, userRepository.count());
+        assertEquals(0, foundUser.size());
     }
+
+    @Test
+    public void memberCannotDeleteAUser_throwsException_test(){
+        userRepository.save(user);
+        User user1 = new User();
+        user1.setUsername("JohnDaniel");
+        user1.setPassword("password");
+        user1.setEmail("john@gmail.com");
+        user1.setRole(Role.MEMBER);
+        user1.setLoggedIn(true);
+        userRepository.save(user1);
+
+        assertEquals(2, userRepository.count());
+        assertThrows(IllegalArgumentException.class, () -> libraryService.deleteUser(user1.getUsername(), user));
+        assertEquals(2, userRepository.count());
+    }
+
+
 }
