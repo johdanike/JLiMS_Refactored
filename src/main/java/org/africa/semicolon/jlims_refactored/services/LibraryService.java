@@ -4,6 +4,7 @@ import org.africa.semicolon.jlims_refactored.data.models.Book;
 import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
+import org.africa.semicolon.jlims_refactored.enums.Role;
 
 import java.util.List;
 
@@ -15,4 +16,5 @@ public interface LibraryService {
     List<User> viewAllUsers();
     User findUserByUsername(String username);
     List<Inventory> deleteUser(String username, User userId);
+    List<Inventory> getInventory(Role role, String userId);
 }

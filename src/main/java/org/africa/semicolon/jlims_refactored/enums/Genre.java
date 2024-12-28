@@ -3,7 +3,7 @@ package org.africa.semicolon.jlims_refactored.enums;
 public enum Genre {
     ACTION,
     SCI_FI,
-    FICTIONS,
+    FICTION,
     DRAMA,
     ROMANCE,
     TECHNOLOGY,

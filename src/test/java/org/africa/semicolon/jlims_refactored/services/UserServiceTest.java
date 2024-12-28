@@ -1,6 +1,7 @@
 package org.africa.semicolon.jlims_refactored.services;
 
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
+import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.*;
@@ -29,12 +30,15 @@ public class UserServiceTest {
     private ReturnBookRequest returnBookRequest;
     @Autowired
     private LibraryRepository libraryRepo;
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     @BeforeEach
     public void setUp() {
         userRepository.deleteAll();
         books.deleteAll();
         libraryRepo.deleteAll();
+        inventoryRepository.deleteAll();
 
         accountRegisterRequest = new AccountRegisterRequest();
         accountRegisterRequest.setUsername("username");
