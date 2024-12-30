@@ -6,16 +6,20 @@ import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
+import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.AddBookRequest;
+import org.africa.semicolon.jlims_refactored.dtos.request.BorrowBookRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AddBookResponse;
+import org.africa.semicolon.jlims_refactored.dtos.response.BorrowBookResponse;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
-import org.africa.semicolon.jlims_refactored.services.ServiceImplementations.UserServiceImpl;
+import org.africa.semicolon.jlims_refactored.services.ServiceImplementations.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,15 +38,17 @@ public class LibraryServiceTest {
     @Autowired
     private InventoryRepository inventoryRepository;
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    private UserService userService;
     private AddBookRequest addBookRequest;
-//    private AddBookResponse addBookResponse;
+    private AddBookResponse addBookResponse;
 
 
     @BeforeEach
     public void setUp() {
         bookRepository.deleteAll();
         userRepository.deleteAll();
+        inventoryRepository.deleteAll();
+
 
         book = new Book();
         book.setTitle("Book Title");
@@ -71,7 +77,6 @@ public class LibraryServiceTest {
         addBookRequest.setIsAvailable("Yes");
         addBookRequest.setDateTime(LocalDateTime.now());
         addBookRequest.setUsername("John");
-
 
     }
 
@@ -182,17 +187,31 @@ public class LibraryServiceTest {
     public void librarianAddsABook_assertThatBookIsSaved_timeAddedIsReturned_test(){
         userRepository.save(user);
 
-        AddBookResponse addBookResponse =  userServiceImpl.addBook(addBookRequest);
+        addBookResponse =  userService.addBook(addBookRequest);
         var recordOfBookAdded = libraryService.getInventory(user.getRole(), addBookResponse.getUserId());
         assertEquals(1, userRepository.count());
         assertEquals(1, bookRepository.count());
 
         System.out.println(userRepository.findByUsername(user.getUsername()));
-        userServiceImpl = new UserServiceImpl();
+        userService = new UserService();
 
         assertEquals(recordOfBookAdded.getFirst().getUserId(), userRepository.findByUsername(addBookResponse.getUserId()));
         assertEquals(recordOfBookAdded.getFirst().getNoOfCopyOfBooks(), addBookResponse.getBookQuantity() );
     }
+
+    @Test
+    public void librarianSearchForUser_canViewAllBooksBorrowed_test(){
+        userRepository.save(user);
+
+        addBookResponse =  userService.addBook(addBookRequest);
+        assertNotNull(addBookResponse);
+
+        List<Inventory> viewAllBooksBorrowedByUser = libraryService.viewAllBooksBorrowedByUser(user.getUsername());
+        assertNotNull(viewAllBooksBorrowedByUser);
+        System.out.println(viewAllBooksBorrowedByUser);
+
+}
+
 
 
 }

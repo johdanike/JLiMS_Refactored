@@ -17,4 +17,5 @@ public interface LibraryService {
     User findUserByUsername(String username);
     List<Inventory> deleteUser(String username, User userId);
     List<Inventory> getInventory(Role role, String userId);
+    List<Inventory> viewAllBooksBorrowedByUser(String username);
 }

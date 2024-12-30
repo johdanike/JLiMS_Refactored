@@ -98,6 +98,15 @@ public class LibraryServiceImpl implements LibraryService {
         return inventoryRepository.findByUserId(userId);
     }
 
+    @Override
+    public List<Inventory> viewAllBooksBorrowedByUser(String username) {
+        User user = getExactUser(username);
+        if (user.getRole() != Role.LIBRARIAN){
+            throw new IllegalArgumentException("Access denied");
+        }
+        return inventoryRepository.findByUserId(user.getId());
+    }
+
     private void checkIfUserIsALibrarian(Role role){
         if (!role.equals(Role.LIBRARIAN)) throw new IllegalArgumentException("Access denied");
     }

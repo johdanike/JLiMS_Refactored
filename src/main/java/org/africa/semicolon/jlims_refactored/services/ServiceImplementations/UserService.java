@@ -9,30 +9,28 @@ import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.*;
 import org.africa.semicolon.jlims_refactored.dtos.response.*;
+import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.exceptions.BookAlreadyExistsException;
 import org.africa.semicolon.jlims_refactored.exceptions.BookDetailsCannotBeEmptyException;
 import org.africa.semicolon.jlims_refactored.exceptions.UserNameFieldCannotBeEmptyException;
 import org.africa.semicolon.jlims_refactored.exceptions.UserNotFoundException;
-import org.africa.semicolon.jlims_refactored.services.InventoryService;
-import org.africa.semicolon.jlims_refactored.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserService implements org.africa.semicolon.jlims_refactored.services.UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
     private BookRepository bookRepository;
     @Autowired
-    private LibraryRepository libraryRepository;
-    @Autowired
-    private InventoryService inventories;
-    @Autowired
     private InventoryRepository inventoryRepository;
+    @Autowired
+    private LibraryRepository libraryRepository;
 
 
     @Override
@@ -75,28 +73,7 @@ public class UserServiceImpl implements UserService {
           return response;
     }
 
-
-
-//    private Book getBookDetailsForBookStocking(AddBookRequest addBookRequest) {
-//        Book book = new Book();
-//        book.setTitle(addBookRequest.getTitle());
-//        book.setAuthor(addBookRequest.getAuthor());
-//        book.setGenre(addBookRequest.getGenre());
-//        book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
-//        bookRepository.save(book);
-//
-//        Inventory inventory = new Inventory();
-//        inventory.setBookId(bookRepository.save(book).getId());
-//        inventory.setNoOfCopyOfBooks(bookRepository.save(book).getNumOfCopies());
-//        inventory.setReturned(false);
-//        inventory.setBorrowed(false);
-//        inventoryRepository.save(inventory);
-//
-//        return book;
-//    }
-
     private Book getBookDetailsForBookStocking(AddBookRequest addBookRequest) {
-        // Save the book
         Book book = new Book();
         book.setTitle(addBookRequest.getTitle());
         book.setAuthor(addBookRequest.getAuthor());
@@ -104,17 +81,16 @@ public class UserServiceImpl implements UserService {
         book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
         Book savedBook = bookRepository.save(book);
 
-        // Save the inventory
         Inventory inventory = new Inventory();
         inventory.setBookId(savedBook.getId());
         inventory.setNoOfCopyOfBooks(savedBook.getNumOfCopies());
         inventory.setReturned(false);
         inventory.setBorrowed(false);
+        System.out.println("bookId : "+savedBook.getId());
         inventoryRepository.save(inventory);
 
         return savedBook;
     }
-
 
     @Override
     public BorrowBookResponse borrowBook(BorrowBookRequest borrowBookRequest) {
@@ -163,7 +139,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private int newBookQuantityAfterBorrowing(BorrowBookRequest borrowBookRequest){
-        bookExistsValidator(borrowBookRequest.getTitle(), borrowBookRequest.getAuthor());
+        bookExistsValidator(borrowBookRequest.getBookName(), borrowBookRequest.getAuthor());
         int presentNumOfCopies = 0;
         Optional<Book> book = bookRepository.findById(borrowBookRequest.getBookId());
         if (book.isPresent()){
@@ -173,7 +149,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Book is currently out of stock, " +
                     "mind checking another book?");
         book.get().setNumOfCopies(presentNumOfCopies - 1);
-//        System.out.println("new number of copieis" + book.get().getNumOfCopies());
         bookRepository.save(book.get());
         return book.get().getNumOfCopies();
     }
@@ -236,7 +211,7 @@ public class UserServiceImpl implements UserService {
         Book foundBook = book.orElseThrow(() -> new IllegalArgumentException("Book " + returnBookRequest.getBookId()+" not found!"));
         presentNumOfCopies = foundBook.getNumOfCopies();
         foundBook.setNumOfCopies(presentNumOfCopies + 1);
-        System.out.println("new number of copie is " + book.get().getNumOfCopies());
+        System.out.println("new number of copies is " + book.get().getNumOfCopies());
 
         bookRepository.save(foundBook);
         return foundBook.getNumOfCopies();
@@ -258,6 +233,22 @@ public class UserServiceImpl implements UserService {
         return deleteBookResponse;
     }
 
+    @Override
+    public List<Book> findBooksBorrowedByMember(String username) {
+        checkIfUserIsALibrarian(findUserRole(username));
+        User user = findUserByUsername(username);
+        List<Book> books =  bookRepository.getBooksBorrowedBy(user.getId());
+        return books;
+    }
+
+    private Role findUserRole(String username) {
+        if(username != null) {
+            User user = findUserByUsername(username);
+            return user.getRole();
+        }
+        return null;
+    }
+
     private void updateInventoryForDeleteBookRequest(DeleteBookRequest deleteBookRequest, User registeredMember) {
         Inventory inventory = new Inventory();
         inventory.setBookId(deleteBookRequest.getBookId());
@@ -277,10 +268,10 @@ public class UserServiceImpl implements UserService {
         bookRepository.findById(bookId);
     }
 
-    private void bookExistsValidator(String title, String author) {
-        if(title == null || author == null || author.trim().isEmpty()) {
+    private void bookExistsValidator(String bookName, String author) {
+        if(bookName == null || author == null || author.trim().isEmpty()) {
             throw new BookDetailsCannotBeEmptyException("Title cannot be null");
-        } else if (title.equalsIgnoreCase(bookRepository.findByTitle(title)) && author.equalsIgnoreCase(bookRepository.findByAuthor(author))) {
+        } else if (bookName.equalsIgnoreCase(bookRepository.findByTitle(bookName)) && author.equalsIgnoreCase(bookRepository.findByAuthor(author))) {
             throw new BookAlreadyExistsException("Book already exists");
         }
     }
@@ -296,5 +287,9 @@ public class UserServiceImpl implements UserService {
         if(user.getUsername() == null || user.getUsername().trim().isEmpty()) {
             throw new UserNameFieldCannotBeEmptyException("Username cannot be null");
         }
+    }
+
+    private void checkIfUserIsALibrarian(Role role){
+        if (!role.equals(Role.LIBRARIAN)) throw new IllegalArgumentException("Access denied");
     }
 }

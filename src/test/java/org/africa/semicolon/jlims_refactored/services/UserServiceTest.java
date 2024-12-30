@@ -1,5 +1,6 @@
 package org.africa.semicolon.jlims_refactored.services;
 
+import org.africa.semicolon.jlims_refactored.data.models.Book;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,7 +60,6 @@ public class UserServiceTest {
 
         borrowBookRequest = new BorrowBookRequest();
         borrowBookRequest.setUsername("username");
-        borrowBookRequest.setTitle(accountRegisterRequest.getUsername());
         borrowBookRequest.setRole(Role.MEMBER);
         borrowBookRequest.setBookName("Things fall apart");
         borrowBookRequest.setAuthor("Chinua Achebe");
@@ -173,5 +175,18 @@ public class UserServiceTest {
         assertEquals(0L, books.count());
     }
 
+    @Test
+    public void librarianSearchForUser_canViewAllBooksBorrowed_test(){
+        accountRegisterRequest.setRole(Role.LIBRARIAN);
+        userService.register(accountRegisterRequest);
+        assertEquals(0L, books.count());
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(10, addBookResponse.getBookQuantity());
+
+        List<Book> booksBorrowedByUser = userService.findBooksBorrowedByMember("username");
+        assertNotNull(booksBorrowedByUser);
+
+    }
 
 }
