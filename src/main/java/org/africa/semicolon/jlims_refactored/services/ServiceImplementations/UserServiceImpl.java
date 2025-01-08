@@ -2,6 +2,7 @@ package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 
 import org.africa.semicolon.jlims_refactored.data.models.Book;
 import org.africa.semicolon.jlims_refactored.data.models.Inventory;
+import org.africa.semicolon.jlims_refactored.data.models.Library;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.services.UserService {
@@ -37,15 +40,7 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
 
     @Override
     public AccountRegisterResponse register(AccountRegisterRequest registerRequest) {
-        usernameValidator(registerRequest);
-
-        User user = getUserDetailsForRegistration(registerRequest);
-
-        AccountRegisterResponse response = new AccountRegisterResponse();
-        response.setUsername(user.getUsername());
-        response.setId(user.getId());
-        response.setMessage("User created successfully");
-        return response;
+        return authenticationServiceImpl.registerAccount(registerRequest);
     }
 
     @Override
@@ -55,21 +50,7 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
 
     @Override
     public LogOutResponse logOut(LogoutRequest logoutRequest) {
-        return null;
-    }
-
-
-    private User getUserDetailsForRegistration(AccountRegisterRequest registerRequest) {
-        User user = new User();
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(registerRequest.getPassword());
-        user.setEmail(registerRequest.getEmail());
-        user.setRole(registerRequest.getRole());
-        user.setLoggedIn(false);
-        userRepository.save(user);
-        Inventory inventory = new Inventory();
-        inventory.setUserId(user.getId());
-        return user;
+        return authenticationServiceImpl.logout(logoutRequest);
     }
 
     @Override
@@ -82,26 +63,47 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
         response.setBookId(book.getId());
         response.setBookQuantity(book.getNumOfCopies());
         response.setMessage("Book added successfully");
-          return response;
+        return response;
     }
 
     private Book getBookDetailsForBookStocking(AddBookRequest addBookRequest) {
-        Book book = new Book();
-        book.setTitle(addBookRequest.getTitle());
-        book.setAuthor(addBookRequest.getAuthor());
-        book.setGenre(addBookRequest.getGenre());
-        book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
-        Book savedBook = bookRepository.save(book);
+        if (isBookDetailsEmptyOrNull(addBookRequest)) throw new IllegalArgumentException("Title or author cannot be empty");
+        Book savedBook = getBookRequest(addBookRequest);
+        setNewInventory(savedBook);
 
+        Library library = new Library();
+        library.setInventories(inventoryRepository.findAll());
+        library.setUsers(userRepository.findAll());
+        library.setBooks(bookRepository.findAll());
+        libraryRepository.save(library);
+        return savedBook;
+    }
+
+    private void setNewInventory(Book savedBook) {
         Inventory inventory = new Inventory();
         inventory.setBookId(savedBook.getId());
         inventory.setNoOfCopyOfBooks(savedBook.getNumOfCopies());
         inventory.setReturned(false);
         inventory.setBorrowed(false);
-        System.out.println("bookId : "+savedBook.getId());
+        System.out.println("bookId : "+ savedBook.getId());
         inventoryRepository.save(inventory);
+    }
 
+    private Book getBookRequest(AddBookRequest addBookRequest) {
+        Book book = new Book();
+        book.setTitle(addBookRequest.getTitle().trim().strip());
+        book.setAuthor(addBookRequest.getAuthor().trim().strip());
+        book.setGenre(addBookRequest.getGenre());
+        book.setNumOfCopies(addBookRequest.getNoOfCopies() != null ? addBookRequest.getNoOfCopies() : 0);
+        Book savedBook = bookRepository.save(book);
         return savedBook;
+    }
+
+    private static boolean isBookDetailsEmptyOrNull(AddBookRequest addBookRequest){
+        if (addBookRequest.getTitle() == null ||
+                addBookRequest.getAuthor() == null )
+            throw new IllegalArgumentException("Book fields cannot be empty");
+        return false;
     }
 
     @Override
@@ -110,15 +112,10 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
         usernameValidator(registeredMember);
 
         int numOfCopiesAvailable = newBookQuantityAfterBorrowing(borrowBookRequest);
-
         boolean bookId = findBookById(borrowBookRequest.getBookId());
-        System.out.println("book id is: "+bookId);
-        System.out.println(borrowBookRequest.getBookId());
 
         BorrowBookResponse response = getBorrowBookResponse(borrowBookRequest, numOfCopiesAvailable);
         updateInventoryForBorrowedBook(borrowBookRequest, registeredMember, numOfCopiesAvailable);
-
-
         return response;
     }
 
@@ -166,15 +163,12 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
     }
 
     private User findUserByUsername(String username) {
-        if(username != null) {
-            return userRepository.findByUsername(username);
-        }
+        if(username != null) return userRepository.findByUsername(username);
         throw new UserNotFoundException("User not found!");
     }
 
     @Override
     public ReturnBookResponse returnBook(ReturnBookRequest returnBookRequest) {
-
         User registeredMember = findUserByUsername(returnBookRequest.getUsername());
         usernameValidator(registeredMember);
 
@@ -183,7 +177,6 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
 
         ReturnBookResponse response = getReturnBookResponse(returnBookRequest, numOfCopiesAvailable);
         updateInventoryForBorrowedBookReturned(returnBookRequest, registeredMember, numOfCopiesAvailable);
-
         return response;
     }
 
@@ -197,7 +190,6 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
         inventory.setReturned(true);
         inventory.setDateBorrowed(borrowBookResponse.getBorrowDate());
         inventory.setBookId(returnBookRequest.getBookId());
-
         inventoryRepository.save(inventory);
     }
 
@@ -213,13 +205,7 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
     private int newBookQuantityAfterReturning(ReturnBookRequest returnBookRequest) {
         bookExistsValidator(returnBookRequest.getBookName(), returnBookRequest.getAuthor());
         int presentNumOfCopies = 0;
-        System.out.println("olodo" + returnBookRequest.getBookId());
-        Optional<Book> book = bookRepository.findById(returnBookRequest.getBookId());
-        System.out.println("numbwr "+book.get().getNumOfCopies());
-
-        System.out.println("book"+ book.get().getNumOfCopies());
-        System.out.println("book"+ book.get().getTitle());
-
+                                                                                                                                                     Optional<Book> book = bookRepository.findById(returnBookRequest.getBookId());
         Book foundBook = book.orElseThrow(() -> new IllegalArgumentException("Book " + returnBookRequest.getBookId()+" not found!"));
         presentNumOfCopies = foundBook.getNumOfCopies();
         foundBook.setNumOfCopies(presentNumOfCopies + 1);
@@ -231,7 +217,7 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
 
     @Override
     public DeleteBookResponse deleteBook(DeleteBookRequest deleteBookRequest) {
-
+        checkIfUserIsALibrarian(findUserRole(deleteBookRequest.getUsername()));
         User registeredMember = findUserByUsername(deleteBookRequest.getUsername());
         usernameValidator(registeredMember);
 
@@ -274,9 +260,7 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
     }
 
     private void bookExistsValidator(String bookId) {
-        if (bookId == null) {
-            throw new IllegalArgumentException("Book id cannot be null");
-        }
+        if (bookId == null) throw new IllegalArgumentException("Book id cannot be null");
         bookRepository.findById(bookId);
     }
 
@@ -285,13 +269,6 @@ public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.se
             throw new BookDetailsCannotBeEmptyException("Title cannot be null");
         } else if (bookName.equalsIgnoreCase(bookRepository.findByTitle(bookName)) && author.equalsIgnoreCase(bookRepository.findByAuthor(author))) {
             throw new BookAlreadyExistsException("Book already exists");
-        }
-    }
-
-
-    private void usernameValidator(AccountRegisterRequest registerRequest) {
-        if (registerRequest.getUsername() == null || registerRequest.getUsername().trim().isEmpty()) {
-            throw new UserNameFieldCannotBeEmptyException("Username cannot be null");
         }
     }
 

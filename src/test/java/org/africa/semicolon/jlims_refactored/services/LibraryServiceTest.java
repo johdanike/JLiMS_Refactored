@@ -29,6 +29,7 @@ public class LibraryServiceTest {
     @Autowired
     private UserRepository userRepository;
     private Book book;
+    private Book book2;
     private User user;
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -51,10 +52,11 @@ public class LibraryServiceTest {
         book.setNumOfCopies(6);
         book.setGenre(Genre.DRAMA);
 
-        book.setTitle("This is a book");
-        book.setAuthor("John-Daniel");
-        book.setGenre(Genre.ACTION);
-        book.setNumOfCopies(1);
+        book2 = new Book();
+        book2.setTitle("This is a book");
+        book2.setAuthor("John-Daniel");
+        book2.setGenre(Genre.ACTION);
+        book2.setNumOfCopies(1);
 
         user = new User();
         user.setUsername("John");
@@ -78,8 +80,8 @@ public class LibraryServiceTest {
     @Test
     public void viewAllBooks_test() {
         bookRepository.save(book);
+        bookRepository.save(book2);
         List<Book> books = libraryService.viewAllBooks();
-        assertNotNull(books);
         assertEquals(bookRepository.count(), books.size());
     }
 
@@ -87,7 +89,6 @@ public class LibraryServiceTest {
     public void viewAllBooksWhen_ThereAreNoBooks_InTheLibrary_returnsEmptyList_test() {
         bookRepository.save(book);
         List<Book> books = libraryService.viewAllBooks();
-        assertNotNull(books);
         assertEquals(bookRepository.count(), books.size());
     }
 
@@ -99,22 +100,27 @@ public class LibraryServiceTest {
     @Test
     public void findAllBooksByGenre_test() {
         bookRepository.save(book);
-        List<Book> books = libraryService.findByGenre(book.getGenre());
-        assertNotNull(books);
+        List<Book> booksFound = libraryService.findByGenre(book.getGenre());
+        assertEquals("Book Title", booksFound.getFirst().getTitle());
     }
 
     @Test
     public void findAllBooksByTitle_test() {
         bookRepository.save(book);
         List<Book> foundBooks = libraryService.findBooksByTitle("Book title");
-        assertNotNull(foundBooks);
+        assertEquals(0, foundBooks.size());
+        assertEquals("author", foundBooks.get(0).getAuthor());
+
+        List<Book> foundBooks2 = libraryService.findBooksByTitle("Book Title");
+        assertEquals(1, foundBooks2.size());
     }
 
     @Test
     public void findAllBooksByAuthor_test() {
         bookRepository.save(book);
+        bookRepository.save(book2);
         List<Book> foundBooks1 = libraryService.findBooksByAuthor("author");
-        assertNotNull(foundBooks1);
+        assertEquals("Book Title", foundBooks1.getFirst().getTitle());
 
         List<Book> foundBook2 = libraryService.findBooksByAuthor("John-Daniel");
         assertNotNull(foundBook2);
@@ -203,5 +209,18 @@ public class LibraryServiceTest {
         List<Inventory> viewAllBooksBorrowedByUser = libraryService.viewAllBooksBorrowedByUser(user.getUsername());
         assertNotNull(viewAllBooksBorrowedByUser);
         System.out.println(viewAllBooksBorrowedByUser);
+    }
+
+    @Test
+    public void testThatLibrarianCanViewAllBooksReturnedByUser(){
+        userRepository.save(user);
+
+        addBookResponse = userServiceImpl.addBook(addBookRequest);
+        assertEquals(1, userRepository.count());
+        assertEquals(1, bookRepository.count());
+
+        List<Book> viewAllBooksReturnedByUser = libraryService.viewAllBooksReturnedByUser(user.getUsername());
+        assertNotNull(viewAllBooksReturnedByUser);
+//        assertEquals(viewAllBooksReturnedByUser.get(1), addBookResponse.getBookId());
     }
 }

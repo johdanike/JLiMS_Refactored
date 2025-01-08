@@ -1,6 +1,7 @@
 package org.africa.semicolon.jlims_refactored.services.ServiceImplementations;
 
 
+import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
@@ -31,6 +32,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         checkThatFieldIsNotNull(accountRegisterRequest);
         checkIfUserAlreadyExists(accountRegisterRequest.getUsername());
 
+        User user = getUserDetailsForRegistration(accountRegisterRequest);
+
+        AccountRegisterResponse response = new AccountRegisterResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setMessage("Successfully registered");
+        return response;
+    }
+
+    private User getUserDetailsForRegistration(AccountRegisterRequest accountRegisterRequest) {
         User user = new User();
 
         user.setUsername(accountRegisterRequest.getUsername());
@@ -40,12 +51,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setLoggedIn(false);
         userRepository.save(user);
 
-
-        AccountRegisterResponse response = new AccountRegisterResponse();
-        response.setId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setMessage("Successfully registered");
-        return response;
+        Inventory inventory = new Inventory();
+        inventory.setUserId(user.getId());
+        return user;
     }
 
     private static void checkThatFieldIsNotNull(AccountRegisterRequest accountRegisterRequest) {
@@ -59,7 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private static void isAccountRegisterFieldEmptyOrNull(AccountRegisterRequest accountRegisterRequest) {
         if (isRegisterDetailsOfNullValue(accountRegisterRequest) ||
-                isRegisterDetailsAnEmptyStringSet(accountRegisterRequest)) {
+                isRegisterDetailAnEmptyStringSet(accountRegisterRequest)) {
             throw new IllegalArgumentException("Fields cannot be empty");
         }
     }
@@ -79,7 +87,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return false;
     }
 
-    private static boolean isRegisterDetailsAnEmptyStringSet(AccountRegisterRequest accountRegisterRequest){
+    private static boolean isRegisterDetailAnEmptyStringSet(AccountRegisterRequest accountRegisterRequest){
         if (accountRegisterRequest.getPassword().trim().equals("")
                 || accountRegisterRequest.getUsername().trim().equals("")
                 || accountRegisterRequest.getEmail().trim().equals("") ){
@@ -101,6 +109,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new UserNotFoundException("User not found");
         }
 
+        LogInResponse response = userDetailsIsCorrect_login(loginRequest, user);
+        if (response != null) return response;
+        throw new IllegalArgumentException("Invalid username or password");
+    }
+
+    private static LogInResponse userDetailsIsCorrect_login(LoginRequest loginRequest, User user) {
         if (user.getUsername().equals(loginRequest.getUsername()) && user.getPassword().equals(loginRequest.getPassword())) {
             user.setLoggedIn(true);
             LogInResponse response = new LogInResponse();
@@ -109,7 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             return response;
         }
-        throw new IllegalArgumentException("Invalid username or password");
+        return null;
     }
 
 
@@ -129,9 +143,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private User getCurrentUser(String username) {
         User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found");
-        }
+        if (user == null) throw new IllegalArgumentException("User not found");
         return user;
     }
 

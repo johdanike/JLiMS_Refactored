@@ -7,11 +7,13 @@ import org.africa.semicolon.jlims_refactored.data.models.Inventory;
 import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
+import org.africa.semicolon.jlims_refactored.data.repositories.LibraryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.services.InventoryService;
 import org.africa.semicolon.jlims_refactored.services.LibraryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +22,8 @@ import java.util.List;
 @Service
 @Slf4j
 public class LibraryServiceImpl implements LibraryService {
-
+    @Autowired
+    private LibraryRepository libraryRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final InventoryRepository inventoryRepository;
@@ -71,7 +74,7 @@ public class LibraryServiceImpl implements LibraryService {
     public User findUserByUsername(String username) {
         User user = getExactUser(username);
         assert user != null;
-        checkIfUserIsALibrarian(user.getRole());
+        isUserLibrarian(user.getRole());
         if (userRepository.findAll().isEmpty()) throw new IllegalArgumentException("No user has been registered");
         User foundUser = userRepository.findByUsername(username);
         log.info("Found user :::>> {}", foundUser);
@@ -82,9 +85,9 @@ public class LibraryServiceImpl implements LibraryService {
     public List<Inventory> deleteUser(String username, User userId) {
         User user = getExactUser(username);
         System.out.println("user: " + user);
-        checkIfUserIsALibrarian(user.getRole());
+        isUserLibrarian(user.getRole());
         User userToBeDeleted = getExactUser(userId);
-        List<Inventory> foundRecords = checkStatOfBookBorrowedByUser(userToBeDeleted);
+        List<Inventory> foundRecords = isBookStillBorrowed(userToBeDeleted);
         if (foundRecords.isEmpty()){
             userRepository.delete(userToBeDeleted);
         }
@@ -93,7 +96,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     public List<Inventory> getInventory(Role role, String userId) {
-        checkIfUserIsALibrarian(role);
+        isUserLibrarian(role);
         System.out.println("Inventory "+inventoryRepository.count()+":"+inventoryRepository.findByUserId(userId));
         return inventoryRepository.findByUserId(userId);
     }
@@ -101,17 +104,22 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public List<Inventory> viewAllBooksBorrowedByUser(String username) {
         User user = getExactUser(username);
-        if (user.getRole() != Role.LIBRARIAN){
-            throw new IllegalArgumentException("Access denied");
-        }
+        isUserLibrarian(user.getRole());
         return inventoryRepository.findByUserId(user.getId());
     }
 
-    private void checkIfUserIsALibrarian(Role role){
+    @Override
+    public List<Book> viewAllBooksReturnedByUser(String username) {
+        User user = getExactUser(username);
+        isUserLibrarian(user.getRole());
+        return bookRepository.findByUserId(user.getId());
+    }
+
+    private void isUserLibrarian(Role role){
         if (!role.equals(Role.LIBRARIAN)) throw new IllegalArgumentException("Access denied");
     }
 
-    private List<Inventory> checkStatOfBookBorrowedByUser(User user){
+    private List<Inventory> isBookStillBorrowed(User user){
          List<Inventory> records = inventoryService.findRecordOfUser(user);
          if (!records.isEmpty()) throw new IllegalArgumentException("User still has a borrowed book, cannot be deleted");
          return records;

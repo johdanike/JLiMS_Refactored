@@ -19,4 +19,5 @@ public interface LibraryService {
     List<Inventory> deleteUser(String username, User userId);
     List<Inventory> getInventory(Role role, String userId);
     List<Inventory> viewAllBooksBorrowedByUser(String username);
+    List<Book> viewAllBooksReturnedByUser(String username);
 }

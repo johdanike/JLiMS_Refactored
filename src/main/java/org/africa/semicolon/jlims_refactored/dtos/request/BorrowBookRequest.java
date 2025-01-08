@@ -13,7 +13,6 @@ public class BorrowBookRequest {
     private String bookName;
     private String author;
     private Role role;
-//    private String title;
     private String bookId;
     private LocalDate BorrowDate;
 }

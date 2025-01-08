@@ -28,13 +28,15 @@ public class UserServiceImplTest {
     private UserRepository userRepository;
     @Autowired
     private BookRepository books;
-    private AddBookRequest addBookRequest;
-    private BorrowBookRequest borrowBookRequest;
-    private ReturnBookRequest returnBookRequest;
     @Autowired
     private LibraryRepository libraryRepo;
     @Autowired
     private InventoryRepository inventoryRepository;
+    private AddBookRequest addBookRequest;
+    private BorrowBookRequest borrowBookRequest;
+    private ReturnBookRequest returnBookRequest;
+    private LoginRequest loginRequest;
+
 
     @BeforeEach
     public void setUp() {
@@ -49,6 +51,11 @@ public class UserServiceImplTest {
         accountRegisterRequest.setEmail("email@email.com");
         accountRegisterRequest.setLoggedIn(accountRegisterRequest.isLoggedIn());
         accountRegisterRequest.setRegistered(true);
+
+        loginRequest = new LoginRequest();
+        loginRequest.setUsername("username");
+        loginRequest.setPassword("password");
+
 
         addBookRequest = new AddBookRequest();
         addBookRequest.setTitle("Things fall apart");
@@ -77,38 +84,57 @@ public class UserServiceImplTest {
         AccountRegisterResponse response = userService.register(accountRegisterRequest);
         assertNotNull(response);
         assertEquals(1L, userRepository.count());
+        assertEquals("Successfully registered", response.getMessage());
     }
-
     @Test
     public void i_registerUserTwice_countIsStillOne_Test() {
         userService.register(accountRegisterRequest);
         assertEquals(1L, userRepository.count());
     }
-
     @Test
     public void i_registerUserTwice_throwException_Test() {
         userService.register(accountRegisterRequest);
         try{
             userService.register(accountRegisterRequest);
         }catch (UserAlreadyExistsException e){
-            assertEquals(e.getMessage(), "User already exists");
+            assertEquals(e.getMessage(), "Username "+ accountRegisterRequest.getUsername()+" already exists!");
         }
     }
+    @Test
+    public void registeredUserCanLogin_Test(){
+        userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
+    }
+    @Test
+    public void loggedInUserCanLogout_Test(){
+        userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
 
+        LogoutRequest logoutRequest = new LogoutRequest();
+        logoutRequest.setUsername("username");
+        logoutRequest.setPassword("password");
+        LogOutResponse logOutResponse =  userService.logOut(logoutRequest);
+        assertEquals("Logout successful", logOutResponse.getMessage());
+    }
     @Test
     public void iAddOneBook_bookCountIsOne_Test() {
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
 
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
         assertEquals(1L, books.count());
     }
-
     @Test
     public void i_addABookThatIs10InNumber_bookCountIs1_quantityIs10_test(){
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
 
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
@@ -117,11 +143,12 @@ public class UserServiceImplTest {
         Integer bookQuantity = addBookResponse.getBookQuantity();
         assertEquals(10 , bookQuantity);
     }
-
     @Test
     public void i_borrowExistingBook_bookCountIsStill1_bookQuantityDecreasesByOne_Test() {
         accountRegisterRequest.setRole(Role.MEMBER);
         userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
         assertEquals(0L, books.count());
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
@@ -134,11 +161,13 @@ public class UserServiceImplTest {
         assertEquals(9, borrowBookResponse.getQuantity());
 
     }
-
     @Test
     public void i_borrowExistingBook_bookCountIsStill1_bookQuantityDecreasesByOne_iReturnBook_noOfCopiesOfBookIncreasesBy1_Test() {
         accountRegisterRequest.setRole(Role.MEMBER);
         userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
+
         assertEquals(0L, books.count());
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
@@ -156,11 +185,13 @@ public class UserServiceImplTest {
         assertEquals(1L, books.count());
         assertEquals(10, returnBookResponse.getQuantity());
     }
-
     @Test
     public void librarianCanDeleteBookFromLibrary_test(){
         accountRegisterRequest.setRole(Role.LIBRARIAN);
         userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
+
         assertEquals(0L, books.count());
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
@@ -179,6 +210,9 @@ public class UserServiceImplTest {
     public void librarianSearchForUser_canViewAllBooksBorrowed_test(){
         accountRegisterRequest.setRole(Role.LIBRARIAN);
         userService.register(accountRegisterRequest);
+        LogInResponse logInResponse = userService.logIn(loginRequest);
+        assertEquals("Logged In Successfully", logInResponse.getMessage());
+
         assertEquals(0L, books.count());
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
@@ -186,7 +220,7 @@ public class UserServiceImplTest {
 
         List<Book> booksBorrowedByUser = userService.findBooksBorrowedByMember("username");
         assertNotNull(booksBorrowedByUser);
-
     }
+
 
 }

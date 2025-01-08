@@ -15,5 +15,4 @@ public class Library {
     List<Book> books;
     List<User>users;
     List<Inventory>inventories;
-
 }

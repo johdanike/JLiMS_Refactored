@@ -15,4 +15,5 @@ public class Book {
     private String author;
     private Genre genre;
     private Integer NumOfCopies;
+    private String userId;
 }
