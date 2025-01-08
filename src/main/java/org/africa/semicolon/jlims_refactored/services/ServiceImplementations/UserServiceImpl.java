@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService implements org.africa.semicolon.jlims_refactored.services.UserService {
+public class UserServiceImpl implements org.africa.semicolon.jlims_refactored.services.UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -31,6 +31,8 @@ public class UserService implements org.africa.semicolon.jlims_refactored.servic
     private InventoryRepository inventoryRepository;
     @Autowired
     private LibraryRepository libraryRepository;
+    @Autowired
+    private AuthenticationServiceImpl authenticationServiceImpl;
 
 
     @Override
@@ -44,6 +46,16 @@ public class UserService implements org.africa.semicolon.jlims_refactored.servic
         response.setId(user.getId());
         response.setMessage("User created successfully");
         return response;
+    }
+
+    @Override
+    public LogInResponse logIn(LoginRequest loginRequest) {
+        return authenticationServiceImpl.login(loginRequest);
+    }
+
+    @Override
+    public LogOutResponse logOut(LogoutRequest logoutRequest) {
+        return null;
     }
 
 

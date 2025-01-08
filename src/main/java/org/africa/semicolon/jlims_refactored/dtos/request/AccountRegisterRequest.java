@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 
-import java.time.LocalDateTime;
 
 @Setter
 @Getter

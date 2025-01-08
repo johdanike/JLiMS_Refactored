@@ -6,24 +6,19 @@ import org.africa.semicolon.jlims_refactored.data.models.User;
 import org.africa.semicolon.jlims_refactored.data.repositories.BookRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.InventoryRepository;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
-import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.AddBookRequest;
-import org.africa.semicolon.jlims_refactored.dtos.request.BorrowBookRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AddBookResponse;
-import org.africa.semicolon.jlims_refactored.dtos.response.BorrowBookResponse;
 import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
-import org.africa.semicolon.jlims_refactored.services.ServiceImplementations.UserService;
+import org.africa.semicolon.jlims_refactored.services.ServiceImplementations.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
+
 
 @SpringBootTest
 public class LibraryServiceTest {
@@ -38,7 +33,7 @@ public class LibraryServiceTest {
     @Autowired
     private InventoryRepository inventoryRepository;
     @Autowired
-    private UserService userService;
+    private UserServiceImpl userServiceImpl;
     private AddBookRequest addBookRequest;
     private AddBookResponse addBookResponse;
 
@@ -86,7 +81,6 @@ public class LibraryServiceTest {
         List<Book> books = libraryService.viewAllBooks();
         assertNotNull(books);
         assertEquals(bookRepository.count(), books.size());
-
     }
 
     @Test
@@ -103,21 +97,21 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void findAllBooksByGenre_test(){
+    public void findAllBooksByGenre_test() {
         bookRepository.save(book);
         List<Book> books = libraryService.findByGenre(book.getGenre());
         assertNotNull(books);
     }
 
     @Test
-    public void findAllBooksByTitle_test(){
+    public void findAllBooksByTitle_test() {
         bookRepository.save(book);
         List<Book> foundBooks = libraryService.findBooksByTitle("Book title");
         assertNotNull(foundBooks);
     }
 
     @Test
-    public void findAllBooksByAuthor_test(){
+    public void findAllBooksByAuthor_test() {
         bookRepository.save(book);
         List<Book> foundBooks1 = libraryService.findBooksByAuthor("author");
         assertNotNull(foundBooks1);
@@ -127,7 +121,7 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void viewAllUsers_test(){
+    public void viewAllUsers_test() {
         userRepository.save(user);
         List<User> foundUsers = libraryService.viewAllUsers();
         assertNotNull(foundUsers);
@@ -143,14 +137,14 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void findUserByUsername_test(){
+    public void findUserByUsername_test() {
         userRepository.save(user);
         User foundUser = libraryService.findUserByUsername(user.getUsername());
         assertNotNull(foundUser);
     }
 
     @Test
-    public void onlyLibrarianCanDeleteUser_test(){
+    public void onlyLibrarianCanDeleteUser_test() {
         userRepository.save(user);
         User user1 = new User();
         user1.setUsername("JohnDaniel");
@@ -168,7 +162,7 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void memberCannotDeleteAUser_throwsException_test(){
+    public void memberCannotDeleteAUser_throwsException_test() {
         userRepository.save(user);
         User user1 = new User();
         user1.setUsername("JohnDaniel");
@@ -184,34 +178,30 @@ public class LibraryServiceTest {
     }
 
     @Test
-    public void librarianAddsABook_assertThatBookIsSaved_timeAddedIsReturned_test(){
+    public void librarianAddsABook_assertThatBookIsSaved_timeAddedIsReturned_test() {
         userRepository.save(user);
 
-        addBookResponse =  userService.addBook(addBookRequest);
+        addBookResponse = userServiceImpl.addBook(addBookRequest);
         var recordOfBookAdded = libraryService.getInventory(user.getRole(), addBookResponse.getUserId());
         assertEquals(1, userRepository.count());
         assertEquals(1, bookRepository.count());
 
         System.out.println(userRepository.findByUsername(user.getUsername()));
-        userService = new UserService();
+        userServiceImpl = new UserServiceImpl();
 
         assertEquals(recordOfBookAdded.getFirst().getUserId(), userRepository.findByUsername(addBookResponse.getUserId()));
-        assertEquals(recordOfBookAdded.getFirst().getNoOfCopyOfBooks(), addBookResponse.getBookQuantity() );
+        assertEquals(recordOfBookAdded.getFirst().getNoOfCopyOfBooks(), addBookResponse.getBookQuantity());
     }
 
     @Test
-    public void librarianSearchForUser_canViewAllBooksBorrowed_test(){
+    public void librarianSearchForUser_canViewAllBooksBorrowed_test() {
         userRepository.save(user);
 
-        addBookResponse =  userService.addBook(addBookRequest);
+        addBookResponse = userServiceImpl.addBook(addBookRequest);
         assertNotNull(addBookResponse);
 
         List<Inventory> viewAllBooksBorrowedByUser = libraryService.viewAllBooksBorrowedByUser(user.getUsername());
         assertNotNull(viewAllBooksBorrowedByUser);
         System.out.println(viewAllBooksBorrowedByUser);
-
-}
-
-
-
+    }
 }

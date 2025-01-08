@@ -7,6 +7,7 @@ import org.africa.semicolon.jlims_refactored.enums.Genre;
 import org.africa.semicolon.jlims_refactored.enums.Role;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface LibraryService {
     List<Book> viewAllBooks();

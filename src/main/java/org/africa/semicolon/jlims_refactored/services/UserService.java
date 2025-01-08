@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface UserService {
     AccountRegisterResponse register(AccountRegisterRequest registerRequest);
-    //    LogInResponse logIn(LoginRequest loginRequest);
-//    LogOutResponse logOut(LogOutRequest logOutRequest);
+        LogInResponse logIn(LoginRequest loginRequest);
+    LogOutResponse logOut(LogoutRequest logoutRequest);
     AddBookResponse addBook(AddBookRequest addBookRequest);
     BorrowBookResponse borrowBook(BorrowBookRequest borrowBookRequest);
     ReturnBookResponse returnBook(ReturnBookRequest returnBookRequest);

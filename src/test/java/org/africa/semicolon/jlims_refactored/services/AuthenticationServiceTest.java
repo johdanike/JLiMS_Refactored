@@ -3,8 +3,13 @@ package org.africa.semicolon.jlims_refactored.services;
 import org.africa.semicolon.jlims_refactored.data.repositories.UserRepository;
 import org.africa.semicolon.jlims_refactored.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims_refactored.dtos.request.LoginRequest;
+import org.africa.semicolon.jlims_refactored.dtos.request.LogoutRequest;
 import org.africa.semicolon.jlims_refactored.dtos.response.AccountRegisterResponse;
+import org.africa.semicolon.jlims_refactored.dtos.response.LogInResponse;
+import org.africa.semicolon.jlims_refactored.dtos.response.LogOutResponse;
+import org.africa.semicolon.jlims_refactored.enums.Role;
 import org.africa.semicolon.jlims_refactored.exceptions.UserAlreadyExistsException;
+import org.africa.semicolon.jlims_refactored.exceptions.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 public class AuthenticationServiceTest {
     @Autowired
-    private AuthenticationService authenticationService;
+private AuthenticationService authenticationService;
     AccountRegisterRequest accountRegisterRequest;
 
     @Autowired
@@ -49,8 +54,8 @@ public class AuthenticationServiceTest {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setUsername(accountRegisterRequest.getUsername());
         loginRequest.setPassword(accountRegisterRequest.getPassword());
-        boolean loginResponse = authenticationService.login(loginRequest);
-        assertTrue(loginResponse);
+        LogInResponse loginResponse = authenticationService.login(loginRequest);
+        assertEquals("Logged In Successfully", loginResponse.getMessage());
         assertEquals(1, userRepository.count());
     }
 
@@ -63,10 +68,14 @@ public class AuthenticationServiceTest {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setUsername(accountRegisterRequest.getUsername());
         loginRequest.setPassword(accountRegisterRequest.getPassword());
-        boolean loginResponse = authenticationService.login(loginRequest);
-        assertTrue(loginResponse);
-        boolean logoutResponse = authenticationService.logout();
-        assertTrue(logoutResponse);
+        LogInResponse loginResponse = authenticationService.login(loginRequest);
+        assertEquals("Logged In Successfully", loginResponse.getMessage());
+
+        LogoutRequest logoutRequest = new LogoutRequest();
+        logoutRequest.setPassword(loginRequest.getPassword());
+        logoutRequest.setUsername(loginRequest.getUsername());
+        LogOutResponse logoutResponse = authenticationService.logout(logoutRequest);
+        assertEquals("Logout successful", logoutResponse.getMessage());
     }
 
     @Test
@@ -75,14 +84,14 @@ public class AuthenticationServiceTest {
         assertNotNull(accountRegisterResponse);
 
         LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsername("Lagbaja");
-        loginRequest.setPassword("password");
+        loginRequest.setUsername("dano");
+        loginRequest.setPassword(accountRegisterRequest.getPassword());
 
-        IllegalArgumentException throwException = assertThrows(IllegalArgumentException.class, () -> {
+        UserNotFoundException throwException = assertThrows(UserNotFoundException.class, () -> {
             authenticationService.login(loginRequest);
         });
 
-        assertEquals("Invalid username or password", throwException.getMessage());
+        assertEquals("User not found", throwException.getMessage());
     }
 
     @Test
@@ -95,6 +104,30 @@ public class AuthenticationServiceTest {
             assertNotNull(accountRegisterResponse2);
         });
         assertTrue(throwException.getMessage().contains("Username " + accountRegisterResponse.getUsername() + " already exists!"));
+    }
+
+    @Test
+    public void testThatUserCannotLoginWithEmptyCredentials(){
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setUsername("");
+        loginRequest.setPassword("");
+        IllegalArgumentException throwException = assertThrows(IllegalArgumentException.class, () -> {
+            authenticationService.login(loginRequest);
+        });
+    }
+
+    @Test
+    public void testThatUserCannotRegisterWithEmptyCredentials(){
+        AccountRegisterRequest accountRegisterRequest2 = new AccountRegisterRequest();
+        accountRegisterRequest2.setUsername("");
+        accountRegisterRequest2.setPassword("");
+        accountRegisterRequest2.setEmail("");
+        accountRegisterRequest2.setRegistered(false);
+        accountRegisterRequest2.setLoggedIn(false);
+        accountRegisterRequest2.setRole(Role.LIBRARIAN);
+        IllegalArgumentException throwException = assertThrows(IllegalArgumentException.class, () -> {
+            authenticationService.registerAccount(accountRegisterRequest2);
+        });
     }
 
 

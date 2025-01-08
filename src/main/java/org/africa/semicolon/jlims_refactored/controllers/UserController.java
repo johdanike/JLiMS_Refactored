@@ -35,8 +35,8 @@ public class UserController {
         }
     }
 
-    @GetMapping("/borrowBook")
-    public ResponseEntity<?> borrowBook(@RequestParam("bookId") BorrowBookRequest borrowBookRequest){
+    @PostMapping("/borrowBook")
+    public ResponseEntity<?> borrowBook(@RequestBody BorrowBookRequest borrowBookRequest){
         try{
             userService.borrowBook(borrowBookRequest);
             return new ResponseEntity<>(new UserApiResponse(true, borrowBookRequest), HttpStatus.OK);
