@@ -126,7 +126,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return null;
     }
 
-
     private static boolean isLoginRequestEmptyOrNull(LoginRequest loginRequest) {
         return loginRequest.getPassword() == null || loginRequest.getUsername().isEmpty() || loginRequest.getPassword().isEmpty();
     }

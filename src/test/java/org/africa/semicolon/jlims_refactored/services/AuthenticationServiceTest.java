@@ -109,8 +109,8 @@ private AuthenticationService authenticationService;
     @Test
     public void testThatUserCannotLoginWithEmptyCredentials(){
         LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsername("");
-        loginRequest.setPassword("");
+        loginRequest.setUsername(" ");
+        loginRequest.setPassword("        ");
         IllegalArgumentException throwException = assertThrows(IllegalArgumentException.class, () -> {
             authenticationService.login(loginRequest);
         });
