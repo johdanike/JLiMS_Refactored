@@ -1,4 +1,32 @@
-name: build with maven
+#name: build with maven
+#
+#on:
+#  push:
+#    branches: ["main", "dev", "prod-support"]
+#  pull_request:
+#    branches: ["main", "dev", "prod-support"]
+#
+#
+#
+#jobs:
+#
+#  build:
+#    name: Unit Build
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v1
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v1
+#        with:
+#          java-version: 21
+#
+#      - name: Maven Package
+#        run: mvn -B clean package
+#      - name: Maven Verify
+#        run: mvn -B clean verify
+
+name: Build with Maven
 
 on:
   push:
@@ -6,22 +34,31 @@ on:
   pull_request:
     branches: ["main", "dev", "prod-support"]
 
-
-
 jobs:
-
   build:
     name: Unit Build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Set up JDK 21
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
-          java-version: 21
+          java-version: '21'
+          distribution: 'temurin'  # Adoptium Temurin JDK
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Maven Package
         run: mvn -B clean package
+
       - name: Maven Verify
-        run: mvn -B clean verify
+        run: mvn -B verify
