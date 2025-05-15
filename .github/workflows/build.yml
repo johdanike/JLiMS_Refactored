@@ -1,64 +1,19 @@
-#name: build with maven
-#
-#on:
-#  push:
-#    branches: ["main", "dev", "prod-support"]
-#  pull_request:
-#    branches: ["main", "dev", "prod-support"]
-#
-#
-#
-#jobs:
-#
-#  build:
-#    name: Unit Build
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - uses: actions/checkout@v1
-#      - name: Set up JDK 21
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: 21
-#
-#      - name: Maven Package
-#        run: mvn -B clean package
-#      - name: Maven Verify
-#        run: mvn -B clean verify
-
-name: Build with Maven
+name: Java CI with Maven
 
 on:
   push:
-    branches: ["main", "dev", "prod-support"]
+    branches: ["main","dev", "prod-support"]
   pull_request:
-    branches: ["main", "dev", "prod-support"]
+    branches: ["main","dev", "prod-support"]
 
 jobs:
+
   build:
-    name: Unit Build
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v1
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v1
         with:
           java-version: '21'
-          distribution: 'temurin'  # Adoptium Temurin JDK
-
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Maven Package
-        run: mvn -B clean package
-
-      - name: Maven Verify
-        run: mvn -B verify
